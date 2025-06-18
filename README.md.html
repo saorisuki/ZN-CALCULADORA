@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+   <meta charset="UTF-8" />
+   <title>ZN - Calculadora de Materiais</title>
+   <style>
+      body {
+         font-family: Arial, sans-serif;
+         padding: 20px;
+         background: #111;
+         color: #eee;
+         display: flex;
+         gap: 40px;
+         flex-wrap: wrap;
+      }
+
+      .calculadora,
+      .valor-arma,
+      .resumo-compra {
+         background: #222;
+         padding: 20px;
+         border-radius: 8px;
+         width: 320px;
+         box-sizing: border-box;
+      }
+
+      select,
+      input {
+         padding: 10px;
+         font-size: 16px;
+         margin: 5px 0;
+         width: 100%;
+         box-sizing: border-box;
+         border-radius: 4px;
+         border: none;
+         background: #fff;
+         color: #000;
+      }
+
+      button {
+         padding: 10px;
+         font-size: 16px;
+         margin: 5px 0;
+         width: 100%;
+         box-sizing: border-box;
+         border-radius: 4px;
+         border: none;
+         background-color: #0066ff;
+         color: #eee;
+         font-weight: bold;
+         cursor: pointer;
+      }
+
+      select option {
+         background: #333;
+         color: #eee;
+      }
+
+      ul {
+         list-style-type: none;
+         padding: 0;
+      }
+
+      li {
+         margin: 4px 0;
+      }
+
+      h3 {
+         margin-top: 20px;
+         margin-bottom: 10px;
+      }
+
+      .valor-arma p,
+      .resumo-compra p {
+         font-size: 20px;
+         margin: 10px 0;
+      }
+
+      .linha-compra {
+         display: flex;
+         gap: 10px;
+         margin-bottom: 10px;
+         justify-content: space-between;
+         align-items: center;
+      }
+
+      .linha-compra button {
+         width: 40px;
+         padding: 0 10px;
+         background: #900;
+         border-radius: 4px;
+         color: white;
+         border: none;
+         cursor: pointer;
+      }
+
+      .resumo-compra label {
+         display: flex;
+         align-items: center;
+         gap: 10px;
+         font-size: 16px;
+         margin-top: 10px;
+         cursor: pointer;
+      }
+
+      .resumo-compra input[type="checkbox"] {
+         width: auto;
+         cursor: pointer;
+      }
+
+      #propt-container {
+         font-family: monospace;
+         font-weight: 600;
+         font-size: 15px;
+         margin-top: 10px;
+         padding: 8px 10px;
+         background: #fff;
+         color: #111;
+         border-radius: 5px;
+         user-select: all;
+         max-width: 100%;
+         overflow-x: auto;
+      }
+
+      #botao-copiar {
+         padding: 6px 12px;
+         margin-top: 10px;
+         cursor: pointer;
+         border-radius: 4px;
+         border: none;
+         background-color: #0066ff;
+         color: #eee;
+         font-weight: bold;
+         font-size: 14px;
+         user-select: none;
+         width: auto;
+         display: block;
+      }
+
+      #botao-copiar:hover,
+      button:hover {
+         background-color: #004bb5;
+      }
+
+      #marca-dagua {
+         position: fixed;
+         bottom: 20px;
+         width: 100%;
+         text-align: center;
+         font-size: 13px;
+         color: #fff;
+         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+         pointer-events: none;
+         user-select: none;
+         z-index: 9999;
+         display: flex;
+         justify-content: center;
+         align-items: center;
+         gap: 6px;
+      }
+
+      #marca-dagua .borboleta {
+         color: #3399ff;
+         font-size: 16px;
+      }
+   </style>
+</head>
+
+<body>
+   <div class="calculadora">
+      <h2>ZN - Calculadora de Materiais</h2>
+
+      <label for="arma">Escolha a arma:</label><br />
+      <select id="arma" onchange="calcular()">
+         <option value="GLOCK RAJADA">GLOCK RAJADA</option>
+         <option value="PT TOURUS">PT TOURUS</option>
+         <option value="F2000">F2000</option>
+         <option value="G3">G3</option>
+      </select><br />
+
+      <label for="quantidade">Quantas armas você quer fabricar?</label><br />
+      <input type="number" id="quantidade" value="1" min="1" onchange="calcular()" /><br />
+      <button onclick="calcular()">Calcular 🖥</button>
+
+      <h3>Materiais necessários:</h3>
+      <ul id="resultado"></ul>
+
+      <h3>PROPT (COPIE E COLE NO SEU F8)</h3>
+      <div id="propt-container" title="Clique no botão copiar para copiar o PROPT"></div>
+      <button id="botao-copiar" title="Copiar PROPT para área de transferência">📋 Copiar</button>
+   </div>
+
+   <div class="valor-arma">
+      <h2>Valor da Arma</h2>
+      <p>Preço Unidade: <span id="preco-unitario">-</span></p>
+      <p>Valor Total: <span id="preco-total">-</span></p>
+
+      <button onclick="adicionarCompra()">Adicionar ao Resumo de Compra</button>
+   </div>
+
+   <div class="resumo-compra">
+      <h2>Resumo de Compra</h2>
+      <div id="lista-compras"></div>
+
+      <label>
+         <input type="checkbox" id="desconto" />
+         Aplicar desconto de parceria (preço especial)
+      </label>
+
+      <p>Total Geral: <strong id="total-geral">R$ 0</strong></p>
+      <p>Valor a Cobrar: <strong id="valor-cobrar">R$ 0</strong></p>
+      <p>Comissão (50%): <strong id="comissao">R$ 0</strong></p>
+      <p>Repassar para Fac (50%): <strong id="repassar-fac">R$ 0</strong></p>
+   </div>
+
+   <script>
+      const armas = {
+         "GLOCK RAJADA": {
+            "Peças de Armas": 5,
+            "Alumínio": 100,
+            "Cobre": 100,
+            "Corpo de Sub": 1,
+            "Borracha": 145,
+            "Plástico": 155,
+            "Mola de Metal": 2,
+            "Vidro": 145
+         },
+         "PT TOURUS": {
+            "Peças de Armas": 5,
+            "Alumínio": 100,
+            "Cobre": 100,
+            "Plástico": 165,
+            "Mola de Metal": 1,
+            "Borracha": 155,
+            "Vidro": 155,
+            "Corpo de Pistola": 1
+         },
+         "F2000": {
+            "Peças de Armas": 5,
+            "Alumínio": 225,
+            "Cobre": 225,
+            "Corpo de Sub": 1,
+            "Borracha": 305,
+            "Plástico": 305,
+            "Mola de Metal": 2,
+            "Vidro": 375
+         },
+         "G3": {
+            "Peças de Armas": 10,
+            "Alumínio": 300,
+            "Cobre": 425,
+            "Corpo de Rifle": 1,
+            "Borracha": 425,
+            "Plástico": 425,
+            "Mola de Metal": 3,
+            "Vidro": 305
+         }
+      };
+
+      const precos = {
+         "G3": {
+            normal: 70000,
+            desconto: 60000
+         },
+         "GLOCK RAJADA": {
+            normal: 45000,
+            desconto: 35000
+         },
+         "PT TOURUS": {
+            normal: 25000,
+            desconto: 18000
+         },
+         "F2000": {
+            normal: 55000,
+            desconto: 45000
+         }
+      };
+
+      let compras = [];
+
+      function calcular() {
+         const armaSelecionada = document.getElementById("arma").value;
+         let qnt = parseInt(document.getElementById("quantidade").value);
+         if (isNaN(qnt) || qnt < 1) {
+            qnt = 1;
+            document.getElementById("quantidade").value = 1;
+         }
+
+         const lista = document.getElementById("resultado");
+         const materiais = armas[armaSelecionada];
+         lista.innerHTML = "";
+
+         for (let item in materiais) {
+            const total = materiais[item] * qnt;
+            const li = document.createElement("li");
+            li.textContent = `${item}: ${total}`;
+            lista.appendChild(li);
+         }
+
+         let linha = "";
+         for (let item in materiais) {
+            const total = materiais[item] * qnt;
+            linha += `${item} ${total} - `;
+         }
+         linha = linha.slice(0, -3);
+         document.getElementById("propt-container").textContent = linha;
+
+         const aplicarDesconto = document.getElementById("desconto").checked;
+         const precoBase = precos[armaSelecionada] || {
+            normal: 0,
+            desconto: 0
+         };
+         const precoUnitario = aplicarDesconto ? precoBase.desconto : precoBase.normal;
+         const precoTotal = precoUnitario * qnt;
+
+         document.getElementById("preco-unitario").textContent = "R$ " + precoUnitario.toLocaleString('pt-BR');
+         document.getElementById("preco-total").textContent = "R$ " + precoTotal.toLocaleString('pt-BR');
+         document.querySelector('.valor-arma h2').textContent = `Valor da Arma (${armaSelecionada})`;
+      }
+
+      function adicionarCompra() {
+         const armaSelecionada = document.getElementById("arma").value;
+         let qnt = parseInt(document.getElementById("quantidade").value);
+         if (isNaN(qnt) || qnt < 1) qnt = 1;
+
+         const itemExistente = compras.find(c => c.arma === armaSelecionada);
+         if (itemExistente) {
+            itemExistente.quantidade += qnt;
+         } else {
+            compras.push({
+               arma: armaSelecionada,
+               quantidade: qnt
+            });
+         }
+
+         atualizarResumo();
+      }
+
+      function atualizarResumo() {
+         const container = document.getElementById("lista-compras");
+         container.innerHTML = "";
+
+         let totalGeral = 0;
+         const aplicarDesconto = document.getElementById("desconto").checked;
+
+         compras.forEach((compra, index) => {
+            const precoBase = precos[compra.arma] || {
+               normal: 0,
+               desconto: 0
+            };
+            const precoUnitario = aplicarDesconto ? precoBase.desconto : precoBase.normal;
+            const totalItem = precoUnitario * compra.quantidade;
+            totalGeral += totalItem;
+
+            const div = document.createElement("div");
+            div.className = "linha-compra";
+
+            const texto = document.createElement("span");
+            texto.textContent = `${compra.arma} - Qtde: ${compra.quantidade} - Total: R$ ${totalItem.toLocaleString('pt-BR')}`;
+
+            const btnRemover = document.createElement("button");
+            btnRemover.textContent = "X";
+            btnRemover.title = "Remover";
+            btnRemover.onclick = () => {
+               compras.splice(index, 1);
+               atualizarResumo();
+            };
+
+            div.appendChild(texto);
+            div.appendChild(btnRemover);
+            container.appendChild(div);
+         });
+
+         document.getElementById("total-geral").textContent = "R$ " + totalGeral.toLocaleString('pt-BR');
+         document.getElementById("valor-cobrar").textContent = "R$ " + totalGeral.toLocaleString('pt-BR');
+
+         const comissao = totalGeral * 0.5;
+         const repassar = totalGeral * 0.5;
+
+         document.getElementById("comissao").textContent = "R$ " + comissao.toLocaleString('pt-BR');
+         document.getElementById("repassar-fac").textContent = "R$ " + repassar.toLocaleString('pt-BR');
+      }
+
+      document.getElementById("desconto").addEventListener("change", () => {
+         calcular();
+         atualizarResumo();
+      });
+
+      document.getElementById("botao-copiar").addEventListener("click", () => {
+         const texto = document.getElementById("propt-container").textContent;
+         navigator.clipboard.writeText(texto).then(() => {
+            alert("Texto copiado para a área de transferência!");
+         }).catch(() => {
+            alert("Não foi possível copiar o texto automaticamente. Por favor, copie manualmente.");
+         });
+      });
+
+      calcular();
+   </script>
+
+   <div id="marca-dagua">
+      <span>Criado por Sammy Lee | Discord: @ssammylee</span>
+      <span class="borboleta">🦋</span>
+   </div>
+</body>
+
+</html>
